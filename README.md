@@ -11,9 +11,7 @@ Available Configurations
 Note, all defconfigs below use pre-built GLIBC based toolchains,
 courtesy of [Bootlin](https://bootlin.com/).
 
- * `marvell_cn913x_defconfig`, minimal defconfig that should suit any
-   CN913x based board.
-
+ * `marvell_cn9130_crb_defconfig`, minimal defconfig for the CN9130 CRB
  * More to come ...
 
 
