@@ -1,0 +1,70 @@
+#!/bin/sh
+# Try before you buy!
+#
+# Qemu provides limited support for testing a build before you flash it
+# to your board.  This script is only a slightly improved command line
+# as documented in Buildroot.  A real improvent would be to tell Qemu
+# too boot the sdcard or FIT image.
+#
+# Note: some variables can be set from the command line to control the
+# behavior, but some are hard coded because this repo focus on aarch64
+# and an ext4 root filesystem, for now.
+
+kernel=Image
+rootfs=rootfs.ext4
+
+QEMU=${QEMU_PATH:-qemu-system-aarch64}
+CPU=${QEMU_CPU:-cortex-a72}
+CPUS=${QEMU_CPUS:-1}
+NET=${QEMU_NET:-user}
+APPEND=${QEMU_APPEND:-quiet net.ifnames=0 -- systemd.show_status}
+
+usage()
+{
+	if [ $# -gt 0 ]; then
+		echo "Missing argument: $*"
+		echo
+	fi
+	echo "\e[1mUsage 1:\e[0m $0 path/to/output"
+	echo "\e[1mUsage 2:\e[0m $0 path/to/Image  path/to/rootfs"
+	echo "\e[1mUsage 3:\e[0m $0 path/to/Image  path/to/rootfs  \"Kernel append\""
+	echo
+	echo "\e[1mQemu options:\e[0m"
+	echo "  QEMU_CPU=$CPU	# cortex-a72, cortex-a53"
+	echo "  QEMU_CPUS=$CPUS		# number of cores"
+	echo "  QEMU_NET=$NET		# bridge,br=virbr0"
+	echo
+	echo "\e[1mExtra kernel args:\e[0m"
+	echo "  QEMU_APPEND=\"$APPEND\""
+	echo
+	echo "\e[1mNOTE:\e[0m This qemu wrapper must be called with the"
+	echo "      path to the Buildroot output directory."
+	echo
+	exit 1
+}
+
+if [ $# -eq 1 ]; then
+	O=$1
+	KERNEL="$O/images/$kernel"
+	ROOTFS="$O/images/$rootfs"
+elif [ $# -ge 2 ]; then
+	KERNEL="$1"
+	ROOTFS="$2"
+	shift 2
+	if [ $# -gt 0 ]; then
+		APPEND="$*"
+	fi
+else
+	usage
+fi
+
+[ -e "$KERNEL" ] || usage "$KERNEL"
+[ -e "$ROOTFS" ] || usage "$ROOTFS"
+
+echo "Starting Qemu  ::  Ctrl-a x -- exit | Ctrl-a c -- toggle console/monitor"
+"$QEMU" -M virt -cpu "$CPU" -smp "$CPUS" -nographic -kernel "$KERNEL"	\
+	-append "rootwait root=/dev/vda console=ttyAMA0 $APPEND"	\
+	-nic "$NET",model=virtio					\
+	-drive file="$ROOTFS",if=none,format=raw,id=hd0 		\
+	-device virtio-blk-device,drive=hd0				\
+	-device i6300esb -rtc clock=host
