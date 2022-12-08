@@ -12,7 +12,7 @@ Note, all defconfigs below use pre-built GLIBC based toolchains,
 courtesy of [Bootlin](https://bootlin.com/).
 
  * `marvell_cn9130_crb_defconfig`, minimal defconfig for the CN9130 CRB
- * More to come ...
+ * `solidrun_cn9132_evk_defconfig`, unfinished defconfig for SolidRun
 
 
 Getting Started
